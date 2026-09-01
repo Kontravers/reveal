@@ -1,4 +1,4 @@
-import { hexToRgb } from "@/lib/utils";
+import { hexToRgb } from "./color";
 import { FRAGMENT_SHADER, VERTEX_SHADER } from "./shader";
 import { MAX_TESS_POINTS, worldLensPoints } from "./shape";
 import {

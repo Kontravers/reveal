@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownRight } from "lucide-react";
 import { ControlPanel } from "@/components/playground/control-panel";
-import { DitherReveal } from "@/lib/dither-reveal";
-import { useLens } from "@/lib/dither-reveal/store";
+import { DitherReveal } from "@kontravers/dither-reveal";
+import { useLens } from "@/components/playground/store";
 
 export const Route = createFileRoute("/")({ component: Home });
 

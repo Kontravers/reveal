@@ -5,23 +5,22 @@ import { Slider } from "@/components/ui/slider";
 import { PolygonEditor } from "@/components/playground/polygon-editor";
 import {
   DITHER_MODE_LABEL,
-  htmlSnippet,
-  reactSnippet,
-  type DitherMode,
-} from "@/lib/dither-reveal";
-import {
   MAX_SHAPE_POINTS,
   SHAPE_LABEL,
   bezierAll,
   cornerPoint,
+  htmlSnippet,
+  installSnippet,
   ngonPath,
+  reactSnippet,
   regularPolygon,
   toggleBezier,
+  type DitherMode,
   type LensShape,
   type PathPoint,
   type WiggleMode,
-} from "@/lib/dither-reveal/shape";
-import { MEDIA, useLens } from "@/lib/dither-reveal/store";
+} from "@kontravers/dither-reveal";
+import { MEDIA, useLens } from "@/components/playground/store";
 import { cn } from "@/lib/utils";
 
 function Field({
@@ -107,12 +106,17 @@ function insertMidpoint(points: PathPoint[]): PathPoint[] {
 
 export function ControlPanel() {
   const lens = useLens();
-  const [copied, setCopied] = useState<"react" | "html" | null>(null);
+  const [copied, setCopied] = useState<"react" | "html" | "npm" | null>(null);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(0);
 
-  const copy = async (kind: "react" | "html") => {
-    const text = kind === "react" ? reactSnippet(lens) : htmlSnippet(lens);
+  const copy = async (kind: "react" | "html" | "npm") => {
+    const text =
+      kind === "react"
+        ? reactSnippet(lens)
+        : kind === "html"
+          ? htmlSnippet(lens)
+          : installSnippet();
     await navigator.clipboard.writeText(text);
     setCopied(kind);
     window.setTimeout(() => setCopied(null), 1400);
@@ -586,7 +590,7 @@ export function ControlPanel() {
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-3">
+        <div className="mt-3 grid grid-cols-3 gap-2 border-t border-line pt-3">
           <Button variant="outline" size="sm" onClick={() => void copy("react")}>
             {copied === "react" ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
             React
@@ -594,6 +598,10 @@ export function ControlPanel() {
           <Button variant="outline" size="sm" onClick={() => void copy("html")}>
             {copied === "html" ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
             HTML
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => void copy("npm")}>
+            {copied === "npm" ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+            npm
           </Button>
         </div>
       </aside>

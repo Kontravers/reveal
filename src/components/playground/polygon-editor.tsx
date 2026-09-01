@@ -5,7 +5,7 @@ import {
   tessellatePath,
   type PathPoint,
   type Vec2,
-} from "@/lib/dither-reveal/shape";
+} from "@kontravers/dither-reveal";
 import { cn } from "@/lib/utils";
 
 type PolygonEditorProps = {

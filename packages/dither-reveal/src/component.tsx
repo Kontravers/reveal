@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
 import { DitherRevealRenderer } from "./renderer";
 import { DEFAULT_DITHER_OPTIONS, type DitherRevealOptions } from "./types";
 
@@ -89,10 +88,13 @@ export function DitherReveal({
   return (
     <div
       ref={wrapRef}
-      className={cn(
-        "pointer-events-none absolute inset-0 overflow-hidden",
-        className,
-      )}
+      className={className}
+      style={{
+        pointerEvents: "none",
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+      }}
       aria-hidden="true"
     >
       <video
@@ -103,9 +105,18 @@ export function DitherReveal({
         playsInline
         preload="auto"
         crossOrigin="anonymous"
-        className="pointer-events-none absolute h-px w-px opacity-0"
+        style={{
+          pointerEvents: "none",
+          position: "absolute",
+          width: 1,
+          height: 1,
+          opacity: 0,
+        }}
       />
-      <canvas ref={canvasRef} className="absolute inset-0 size-full" />
+      <canvas
+        ref={canvasRef}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+      />
     </div>
   );
 }

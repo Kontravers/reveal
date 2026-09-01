@@ -1,5 +1,8 @@
 import { create } from "zustand";
-import { DEFAULT_DITHER_OPTIONS, type DitherRevealOptions } from "./types";
+import {
+  DEFAULT_DITHER_OPTIONS,
+  type DitherRevealOptions,
+} from "@kontravers/dither-reveal";
 
 export const MEDIA = [
   { id: "waves", src: "/media/waves-480.mp4", label: "Waves" },

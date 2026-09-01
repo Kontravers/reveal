@@ -14,3 +14,5 @@ artifacts
 .grok/preview.pid
 .grok/preview.log
 *.tsbuildinfo
+packages/*/dist
+*.tgz

@@ -14,7 +14,9 @@ export function reactSnippet(options: DitherRevealOptions) {
           })),
         )}}`
       : "";
-  return `<section className="relative min-h-[70vh] overflow-hidden bg-[#e8e2d4]">
+  return `import { DitherReveal } from "@kontravers/dither-reveal";
+
+<section className="relative min-h-[70vh] overflow-hidden bg-[#e8e2d4]">
   <DitherReveal
     src="${options.src}"
     mode="${options.mode}"
@@ -61,7 +63,10 @@ export function htmlSnippet(options: DitherRevealOptions) {
           })),
         )}'`
       : "";
-  return `<section style="position:relative;min-height:70vh;overflow:hidden;background:${options.paper}">
+  return `<!-- npm i @kontravers/dither-reveal
+     import { defineDitherReveal } from "@kontravers/dither-reveal/element";
+     defineDitherReveal(); -->
+<section style="position:relative;min-height:70vh;overflow:hidden;background:${options.paper}">
   <dither-reveal
     src="${options.src}"
     mode="${options.mode}"
@@ -91,4 +96,8 @@ export function htmlSnippet(options: DitherRevealOptions) {
     highlights="${options.highlights.toFixed(2)}"
   ></dither-reveal>
 </section>`;
+}
+
+export function installSnippet() {
+  return `npm i @kontravers/dither-reveal`;
 }

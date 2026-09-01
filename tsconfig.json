@@ -25,12 +25,19 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@kontravers/dither-reveal": [
+        "./packages/dither-reveal/src/index.ts"
+      ],
+      "@kontravers/dither-reveal/element": [
+        "./packages/dither-reveal/src/element.ts"
       ]
     },
     "allowImportingTsExtensions": true
   },
   "include": [
     "src",
-    "server"
+    "server",
+    "packages/dither-reveal/src"
   ]
 }

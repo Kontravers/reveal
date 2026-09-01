@@ -2,19 +2,23 @@
 
 Cursor-reactive section backgrounds. A looping video sits behind the page. A
 soft lens under the pointer reveals it as mono Bayer, color Bayer, or live
-color. One WebGL2 pass. Drop-in per section.
+color. One WebGL2 pass.
 
-Live playground: this repo’s homepage. Tune the instrument, copy React or HTML.
+Live playground: this repo’s homepage. Tune the instrument, copy React, HTML,
+or the npm install line.
 
-Repo: https://github.com/Kontravers/reveal (private)
+Repo: https://github.com/Kontravers/reveal
+
+Package (not published yet): `@kontravers/dither-reveal`
 
 ## Run
 
 ```bash
 npm install
 npm run dev          # http://localhost:8080
-npm run build        # Vercel/Nitro production output
 npm run typecheck
+npm run package:build
+npm run package:pack
 ```
 
 Node 22. Video in `public/media/` should stay muted, looping, ~480p, same-origin
@@ -22,9 +26,15 @@ or CORS-enabled.
 
 ## Drop-in
 
-Copy `src/lib/dither-reveal/` into another React app, or use the custom element.
+After the package is on npm:
+
+```bash
+npm i @kontravers/dither-reveal
+```
 
 ```tsx
+import { DitherReveal } from "@kontravers/dither-reveal";
+
 <section className="relative min-h-[70vh] overflow-hidden bg-[#e8e2d4]">
   <DitherReveal
     src="/hero.mp4"
@@ -43,23 +53,28 @@ Copy `src/lib/dither-reveal/` into another React app, or use the custom element.
 ```
 
 Parent must be `position: relative`. The canvas is `pointer-events: none`.
-`<dither-reveal>` in `element.ts` mirrors the same attributes.
+`<dither-reveal>` in the package `element` entry mirrors the same attributes.
+
+Until publish, the playground still copies the same snippet. The engine source
+is `packages/dither-reveal`.
 
 ## Engine map
 
 ```
-src/lib/dither-reveal/
+packages/dither-reveal/src/
+  color.ts          hex → RGB
   types.ts          all options + defaults
   shape.ts          vertices, Bézier, tessellate, wiggle oscillators
   shader.ts         Bayer, grade, cover UV, circle/polygon SDF
   renderer.ts       WebGL2, video texture, rAF
-  component.tsx     React drop-in
+  component.tsx     React drop-in (inline layout, no Tailwind)
   element.ts        <dither-reveal>
-  snippet.ts        copy-paste from the instrument
-  store.ts          playground state
+  snippet.ts        React / HTML / npm copy text
+  index.ts          package entry
 
 src/components/playground/
-  control-panel.tsx instrument
+  store.ts            instrument state (not in the package)
+  control-panel.tsx   instrument
   polygon-editor.tsx  points + Bézier handles
 
 src/routes/index.tsx   three demo sections
@@ -91,9 +106,10 @@ Circle stays analytic.
 1. Circular Bayer lens playground
 2. Shape + motion module
 3. Per-point Bézier + n-gon curve
+4. Extract engine into `@kontravers/dither-reveal` (unpublished)
 
 ## Later
 
 - Named presets (star, capsule) — n-gon + poly already cover them
-- Extract `dither-reveal` as its own package
-- Public repo / Vercel demo when you want others on it
+- Publish `@kontravers/dither-reveal` to npm
+- Hosted playground / shareable look URLs
