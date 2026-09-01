@@ -8,26 +8,12 @@ export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
   const lens = useLens();
+  const { patch: _, reset: __, ...hero } = lens;
 
   return (
     <main className="bg-paper text-ink">
       <section className="relative min-h-svh overflow-hidden">
-        <DitherReveal
-          src={lens.src}
-          mode={lens.mode}
-          radius={lens.radius}
-          softness={lens.softness}
-          pixelSize={lens.pixelSize}
-          matrix={lens.matrix}
-          ink={lens.ink}
-          paper={lens.paper}
-          brightness={lens.brightness}
-          contrast={lens.contrast}
-          shadows={lens.shadows}
-          mids={lens.mids}
-          highlights={lens.highlights}
-          follow={lens.follow}
-        />
+        <DitherReveal {...hero} />
 
         <div className="relative z-10 flex min-h-svh flex-col justify-between px-5 py-6 sm:px-8 lg:px-10">
           <header className="flex items-center justify-between gap-4">
@@ -35,8 +21,8 @@ function Home() {
               Reveal
             </p>
             <p className="hidden max-w-sm text-right text-xs text-muted sm:block">
-              Move the pointer. A vignette of the film appears — Bayer-dithered,
-              color-dithered, or live.
+              Move the pointer. The lens can be a circle, n-gon, or a polygon
+              you draw — Bayer, color dither, or live film.
             </p>
           </header>
 
@@ -53,9 +39,8 @@ function Home() {
                 the cursor.
               </h1>
               <p className="mt-6 max-w-md text-sm leading-relaxed text-muted sm:text-base">
-                Drop a low-res looping video into any section. Outside the lens
-                you see paper. Inside: ordered dither, or the grade as-shot.
-                One pass on the GPU.
+                Drop a low-res looping video into any section. Pick a shape,
+                grade the film, then copy the snippet. One pass on the GPU.
               </p>
               <p className="mt-8 flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] text-muted uppercase">
                 Tune the instrument
@@ -71,8 +56,16 @@ function Home() {
         <DitherReveal
           src="/media/citrus-480.mp4"
           mode="color"
-          radius={260}
-          softness={110}
+          shape="triangle"
+          radius={280}
+          softness={70}
+          rotation={-8}
+          rotationSpeed={0.04}
+          wigglePosAmount={18}
+          wigglePosSpeed={0.22}
+          wiggleRotAmount={6}
+          wiggleRotSpeed={0.18}
+          wiggleMode="loop"
           pixelSize={2}
           brightness={0.04}
           contrast={1.15}
@@ -84,15 +77,14 @@ function Home() {
         />
         <div className="relative z-10 mx-auto flex min-h-[85svh] max-w-5xl flex-col justify-end px-5 py-16 sm:px-8">
           <p className="font-mono text-[11px] tracking-[0.18em] text-paper/60 uppercase">
-            Live color mode
+            Triangle + motion
           </p>
           <h2 className="mt-4 max-w-2xl font-display text-4xl leading-[1.05] tracking-[-0.03em] sm:text-6xl">
-            Same lens. Film instead of ink.
+            Same film. A different aperture.
           </h2>
           <p className="mt-5 max-w-md text-sm leading-relaxed text-paper/70">
-            Flip to live color when you want the vignette to play the video
-            straight — still graded, still radius-controlled, still cheap. This
-            section is a second drop-in with its own source.
+            Live color through a spinning triangle, with a slow position and
+            rotation wiggle. Loop or zigzag from the instrument.
           </p>
         </div>
       </section>
@@ -101,10 +93,15 @@ function Home() {
         <DitherReveal
           src="/media/flower.mp4"
           mode="dither-color"
-          radius={180}
-          softness={70}
+          shape="ngon"
+          sides={5}
+          radius={200}
+          softness={48}
           pixelSize={4}
           matrix={4}
+          wigglePointsAmount={14}
+          wigglePointsSpeed={0.4}
+          wiggleMode="zigzag"
           ink="#141413"
           paper="#e8e2d4"
           contrast={1.25}
@@ -118,9 +115,8 @@ function Home() {
               One component per section.
             </h2>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-muted">
-              Parent needs position relative. The canvas is pointer-events none,
-              so type and links keep working. Video should be same-origin or
-              CORS-enabled, muted, looping, around 480p.
+              Parent needs position relative. Draw a custom polygon in the
+              instrument, or pass `shape`, `sides`, and motion props yourself.
             </p>
           </div>
           <pre className="overflow-x-auto rounded-3xl bg-ink p-5 font-mono text-[11px] leading-relaxed text-paper shadow-[0_0_0_1px_rgba(20,20,19,0.08)] sm:p-6">
@@ -128,17 +124,12 @@ function Home() {
   <DitherReveal
     src="/hero.mp4"
     mode="dither"
+    shape="ngon"
+    sides={6}
     radius={220}
     softness={90}
-    pixelSize={3}
-    matrix={8}
-    ink="#141413"
-    paper="#e8e2d4"
-    brightness={0}
-    contrast={1}
-    shadows={0}
-    mids={0}
-    highlights={0}
+    rotation={0}
+    wiggleMode="loop"
   />
   <h1>Your copy</h1>
 </section>`}
@@ -149,7 +140,7 @@ function Home() {
       <footer className="border-t border-line px-5 py-8 sm:px-8">
         <div className="mx-auto flex max-w-5xl flex-col gap-3 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono tracking-[0.16em] uppercase">Reveal</p>
-          <p>Bayer lens for any site. Low-res video. One GPU pass.</p>
+          <p>Shaped Bayer lens for any site. Low-res video. One GPU pass.</p>
         </div>
       </footer>
     </main>

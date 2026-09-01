@@ -1,5 +1,6 @@
 import { hexToRgb } from "@/lib/utils";
 import { FRAGMENT_SHADER, VERTEX_SHADER } from "./shader";
+import { MAX_SHAPE_POINTS, worldLensPoints } from "./shape";
 import {
   DEFAULT_DITHER_OPTIONS,
   type DitherRevealOptions,
@@ -104,7 +105,7 @@ export class DitherRevealRenderer {
       uVideo: gl.getUniformLocation(program, "uVideo"),
       uResolution: gl.getUniformLocation(program, "uResolution"),
       uVideoSize: gl.getUniformLocation(program, "uVideoSize"),
-      uCursor: gl.getUniformLocation(program, "uCursor"),
+      uCenter: gl.getUniformLocation(program, "uCenter"),
       uRadius: gl.getUniformLocation(program, "uRadius"),
       uSoftness: gl.getUniformLocation(program, "uSoftness"),
       uPixelSize: gl.getUniformLocation(program, "uPixelSize"),
@@ -119,11 +120,21 @@ export class DitherRevealRenderer {
       uHighlights: gl.getUniformLocation(program, "uHighlights"),
       uHasVideo: gl.getUniformLocation(program, "uHasVideo"),
       uTime: gl.getUniformLocation(program, "uTime"),
+      uShapeKind: gl.getUniformLocation(program, "uShapeKind"),
+      uPointCount: gl.getUniformLocation(program, "uPointCount"),
+      uPoints: gl.getUniformLocation(program, "uPoints"),
     };
   }
 
   setOptions(partial: Partial<DitherRevealOptions>) {
-    this.options = { ...this.options, ...partial };
+    const next = { ...this.options };
+    (Object.keys(partial) as (keyof DitherRevealOptions)[]).forEach((key) => {
+      const value = partial[key];
+      if (value !== undefined) {
+        (next as DitherRevealOptions)[key] = value as never;
+      }
+    });
+    this.options = next;
   }
 
   setPointer(cssX: number, cssY: number) {
@@ -213,6 +224,31 @@ export class DitherRevealRenderer {
     const ink = hexToRgb(this.options.ink);
     const paper = hexToRgb(this.options.paper);
     const dpr = this.dpr;
+    const time = (performance.now() - this.startTime) / 1000;
+    const lens = worldLensPoints({
+      shape: this.options.shape,
+      sides: this.options.sides,
+      rectAspect: this.options.rectAspect,
+      polygonPoints: this.options.polygonPoints,
+      radius: this.options.radius * dpr,
+      rotation: this.options.rotation,
+      rotationSpeed: this.options.rotationSpeed,
+      wigglePosAmount: this.options.wigglePosAmount * dpr,
+      wigglePosSpeed: this.options.wigglePosSpeed,
+      wiggleRotAmount: this.options.wiggleRotAmount,
+      wiggleRotSpeed: this.options.wiggleRotSpeed,
+      wigglePointsAmount: this.options.wigglePointsAmount * dpr,
+      wigglePointsSpeed: this.options.wigglePointsSpeed,
+      wiggleMode: this.options.wiggleMode,
+      cursorX: this.cursor.x,
+      cursorY: this.cursor.y,
+      time,
+    });
+    const packed = new Float32Array(MAX_SHAPE_POINTS * 2);
+    for (let i = 0; i < lens.count; i++) {
+      packed[i * 2] = lens.points[i]?.x ?? 0;
+      packed[i * 2 + 1] = lens.points[i]?.y ?? 0;
+    }
 
     gl.uniform1i(this.uniforms.uVideo, 0);
     gl.uniform2f(
@@ -225,7 +261,7 @@ export class DitherRevealRenderer {
       ready ? this.video.videoWidth : 1,
       ready ? this.video.videoHeight : 1,
     );
-    gl.uniform2f(this.uniforms.uCursor, this.cursor.x, this.cursor.y);
+    gl.uniform2f(this.uniforms.uCenter, lens.centerX, lens.centerY);
     gl.uniform1f(this.uniforms.uRadius, this.options.radius * dpr);
     gl.uniform1f(this.uniforms.uSoftness, this.options.softness * dpr);
     gl.uniform1f(this.uniforms.uPixelSize, this.options.pixelSize * dpr);
@@ -239,10 +275,10 @@ export class DitherRevealRenderer {
     gl.uniform1f(this.uniforms.uMids, this.options.mids);
     gl.uniform1f(this.uniforms.uHighlights, this.options.highlights);
     gl.uniform1f(this.uniforms.uHasVideo, ready ? 1 : 0);
-    gl.uniform1f(
-      this.uniforms.uTime,
-      (performance.now() - this.startTime) / 1000,
-    );
+    gl.uniform1f(this.uniforms.uTime, time);
+    gl.uniform1i(this.uniforms.uShapeKind, this.options.shape === "circle" ? 0 : 1);
+    gl.uniform1i(this.uniforms.uPointCount, lens.count);
+    gl.uniform2fv(this.uniforms.uPoints, packed);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }

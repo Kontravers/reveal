@@ -1,47 +1,28 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { DitherRevealRenderer } from "./renderer";
-import type { DitherMatrix, DitherMode } from "./types";
+import { DEFAULT_DITHER_OPTIONS, type DitherRevealOptions } from "./types";
 
-export type DitherRevealProps = {
+export type DitherRevealProps = Partial<DitherRevealOptions> & {
   src: string;
-  mode?: DitherMode;
-  radius?: number;
-  softness?: number;
-  pixelSize?: number;
-  matrix?: DitherMatrix;
-  ink?: string;
-  paper?: string;
-  brightness?: number;
-  contrast?: number;
-  shadows?: number;
-  mids?: number;
-  highlights?: number;
-  follow?: number;
   className?: string;
 };
 
 export function DitherReveal({
   src,
-  mode = "dither",
-  radius = 220,
-  softness = 90,
-  pixelSize = 3,
-  matrix = 8,
-  ink = "#141413",
-  paper = "#e8e2d4",
-  brightness = 0,
-  contrast = 1,
-  shadows = 0,
-  mids = 0,
-  highlights = 0,
-  follow = 0.2,
   className,
+  ...rest
 }: DitherRevealProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const rendererRef = useRef<DitherRevealRenderer | null>(null);
+  const options: DitherRevealOptions = {
+    ...DEFAULT_DITHER_OPTIONS,
+    ...rest,
+    src,
+    polygonPoints: rest.polygonPoints ?? DEFAULT_DITHER_OPTIONS.polygonPoints,
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -92,38 +73,8 @@ export function DitherReveal({
   }, []);
 
   useEffect(() => {
-    rendererRef.current?.setOptions({
-      src,
-      mode,
-      radius,
-      softness,
-      pixelSize,
-      matrix,
-      ink,
-      paper,
-      brightness,
-      contrast,
-      shadows,
-      mids,
-      highlights,
-      follow,
-    });
-  }, [
-    src,
-    mode,
-    radius,
-    softness,
-    pixelSize,
-    matrix,
-    ink,
-    paper,
-    brightness,
-    contrast,
-    shadows,
-    mids,
-    highlights,
-    follow,
-  ]);
+    rendererRef.current?.setOptions(options);
+  }, [options]);
 
   useEffect(() => {
     const video = videoRef.current;

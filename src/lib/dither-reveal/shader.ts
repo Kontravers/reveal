@@ -11,7 +11,6 @@ precision highp float;
 uniform sampler2D uVideo;
 uniform vec2 uResolution;
 uniform vec2 uVideoSize;
-uniform vec2 uCursor;
 uniform float uRadius;
 uniform float uSoftness;
 uniform float uPixelSize;
@@ -26,6 +25,10 @@ uniform float uMids;
 uniform float uHighlights;
 uniform float uHasVideo;
 uniform float uTime;
+uniform vec2 uCenter;
+uniform int uShapeKind;
+uniform int uPointCount;
+uniform vec2 uPoints[12];
 
 out vec4 fragColor;
 
@@ -81,6 +84,40 @@ vec3 grade(vec3 c) {
   return clamp(c, 0.0, 1.0);
 }
 
+float sdCircle(vec2 p, float r) {
+  return length(p) - r;
+}
+
+float sdPolygon(vec2 p, int n) {
+  vec2 v0 = uPoints[0];
+  float d = dot(p - v0, p - v0);
+  float s = 1.0;
+  for (int i = 0; i < 12; i++) {
+    if (i >= n) break;
+    int j = i == 0 ? n - 1 : i - 1;
+    vec2 a = uPoints[i];
+    vec2 b = uPoints[j];
+    vec2 e = b - a;
+    vec2 w = p - a;
+    float ee = max(dot(e, e), 1e-6);
+    vec2 proj = w - e * clamp(dot(w, e) / ee, 0.0, 1.0);
+    d = min(d, dot(proj, proj));
+    bvec3 c = bvec3(p.y >= a.y, p.y < b.y, e.x * w.y > e.y * w.x);
+    if (all(c) || all(not(c))) s *= -1.0;
+  }
+  return s * sqrt(max(d, 0.0));
+}
+
+float lensMask(vec2 frag) {
+  float sd;
+  if (uShapeKind == 0) {
+    sd = sdCircle(frag - uCenter, uRadius);
+  } else {
+    sd = sdPolygon(frag, max(uPointCount, 3));
+  }
+  return 1.0 - smoothstep(-max(uSoftness, 0.75), 0.0, sd);
+}
+
 void main() {
   vec2 frag = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
   float pixel = max(uPixelSize, 1.0);
@@ -113,9 +150,7 @@ void main() {
     }
   }
 
-  float dist = length(frag - uCursor);
-  float inner = max(uRadius - uSoftness, 0.0);
-  float mask = 1.0 - smoothstep(inner, uRadius, dist);
+  float mask = lensMask(frag);
 
   fragColor = vec4(look * mask, mask);
 }

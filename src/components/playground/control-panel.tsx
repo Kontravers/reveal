@@ -2,12 +2,21 @@ import { useState, type ReactNode } from "react";
 import { Check, Copy, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { PolygonEditor } from "@/components/playground/polygon-editor";
 import {
   DITHER_MODE_LABEL,
   htmlSnippet,
   reactSnippet,
   type DitherMode,
 } from "@/lib/dither-reveal";
+import {
+  MAX_SHAPE_POINTS,
+  SHAPE_LABEL,
+  regularPolygon,
+  type LensShape,
+  type Vec2,
+  type WiggleMode,
+} from "@/lib/dither-reveal/shape";
 import { MEDIA, useLens } from "@/lib/dither-reveal/store";
 import { cn } from "@/lib/utils";
 
@@ -37,13 +46,20 @@ function Segmented<T extends string>({
   value,
   options,
   onChange,
+  columns = 3,
 }: {
   value: T;
   options: { value: T; label: string }[];
   onChange: (value: T) => void;
+  columns?: 2 | 3;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-1 rounded-xl bg-paper-2 p-1">
+    <div
+      className={cn(
+        "grid gap-1 rounded-xl bg-paper-2 p-1",
+        columns === 2 ? "grid-cols-2" : "grid-cols-3",
+      )}
+    >
       {options.map((option) => (
         <button
           key={option.value}
@@ -61,6 +77,28 @@ function Segmented<T extends string>({
       ))}
     </div>
   );
+}
+
+function insertMidpoint(points: Vec2[]): Vec2[] {
+  if (points.length >= MAX_SHAPE_POINTS) return points;
+  let best = 0;
+  let bestD = -1;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    if (!a || !b) continue;
+    const d = Math.hypot(b.x - a.x, b.y - a.y);
+    if (d > bestD) {
+      bestD = d;
+      best = i;
+    }
+  }
+  const a = points[best];
+  const b = points[(best + 1) % points.length];
+  if (!a || !b) return points;
+  const next = [...points];
+  next.splice(best + 1, 0, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  return next;
 }
 
 export function ControlPanel() {
@@ -140,9 +178,28 @@ export function ControlPanel() {
             ))}
           </div>
 
-          <Field label="Radius" display={`${Math.round(lens.radius)}px`}>
+          <div className="border-t border-line pt-4">
+            <p className="mb-3 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+              Shape
+            </p>
+            <Segmented
+              value={lens.shape}
+              onChange={(shape: LensShape) => {
+                if (shape === "polygon" && lens.polygonPoints.length < 3) {
+                  lens.patch({ shape, polygonPoints: regularPolygon(lens.sides) });
+                } else {
+                  lens.patch({ shape });
+                }
+              }}
+              options={(
+                ["circle", "square", "rectangle", "triangle", "ngon", "polygon"] as const
+              ).map((value) => ({ value, label: SHAPE_LABEL[value] }))}
+            />
+          </div>
+
+          <Field label="Size" display={`${Math.round(lens.radius)}px`}>
             <Slider
-              aria-label="Radius"
+              aria-label="Size"
               value={lens.radius}
               min={60}
               max={480}
@@ -158,6 +215,101 @@ export function ControlPanel() {
               onValueChange={(softness) => lens.patch({ softness })}
             />
           </Field>
+          <Field label="Rotation" display={`${Math.round(lens.rotation)}°`}>
+            <Slider
+              aria-label="Rotation"
+              value={lens.rotation}
+              min={-180}
+              max={180}
+              onValueChange={(rotation) => lens.patch({ rotation })}
+            />
+          </Field>
+          <Field label="Spin" display={`${lens.rotationSpeed.toFixed(2)} r/s`}>
+            <Slider
+              aria-label="Spin"
+              value={lens.rotationSpeed}
+              min={-1}
+              max={1}
+              step={0.01}
+              onValueChange={(rotationSpeed) => lens.patch({ rotationSpeed })}
+            />
+          </Field>
+
+          {lens.shape === "rectangle" ? (
+            <Field label="Aspect" display={lens.rectAspect.toFixed(2)}>
+              <Slider
+                aria-label="Aspect"
+                value={lens.rectAspect}
+                min={0.4}
+                max={2.6}
+                step={0.01}
+                onValueChange={(rectAspect) => lens.patch({ rectAspect })}
+              />
+            </Field>
+          ) : null}
+
+          {lens.shape === "ngon" ? (
+            <Field label="Sides" display={`${lens.sides}`}>
+              <Slider
+                aria-label="Sides"
+                value={lens.sides}
+                min={3}
+                max={MAX_SHAPE_POINTS}
+                step={1}
+                onValueChange={(sides) => lens.patch({ sides })}
+              />
+            </Field>
+          ) : null}
+
+          {lens.shape === "polygon" ? (
+            <div className="grid gap-3">
+              <PolygonEditor
+                points={lens.polygonPoints}
+                onChange={(polygonPoints) => lens.patch({ polygonPoints })}
+              />
+              <div className="grid grid-cols-3 gap-1">
+                <button
+                  type="button"
+                  className="h-9 rounded-lg text-[11px] font-medium text-muted ring-1 ring-line hover:text-ink"
+                  onClick={() =>
+                    lens.patch({ polygonPoints: insertMidpoint(lens.polygonPoints) })
+                  }
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  className="h-9 rounded-lg text-[11px] font-medium text-muted ring-1 ring-line hover:text-ink"
+                  onClick={() => {
+                    if (lens.polygonPoints.length <= 3) return;
+                    lens.patch({
+                      polygonPoints: lens.polygonPoints.slice(0, -1),
+                    });
+                  }}
+                >
+                  Drop
+                </button>
+                <button
+                  type="button"
+                  className="h-9 rounded-lg text-[11px] font-medium text-muted ring-1 ring-line hover:text-ink"
+                  onClick={() =>
+                    lens.patch({
+                      polygonPoints: regularPolygon(
+                        Math.max(3, lens.polygonPoints.length),
+                      ),
+                    })
+                  }
+                >
+                  Regular
+                </button>
+              </div>
+              <p className="text-[11px] text-muted">
+                Drag handles. Click empty canvas to add a point (
+                {lens.polygonPoints.length}/{MAX_SHAPE_POINTS}).
+              </p>
+            </div>
+          ) : null}
+
           <Field label="Pixel size" display={`${lens.pixelSize.toFixed(1)}`}>
             <Slider
               aria-label="Pixel size"
@@ -178,6 +330,92 @@ export function ControlPanel() {
               onValueChange={(follow) => lens.patch({ follow })}
             />
           </Field>
+
+          <div className="border-t border-line pt-4">
+            <p className="mb-3 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+              Motion
+            </p>
+            <Segmented
+              value={lens.wiggleMode}
+              columns={2}
+              onChange={(wiggleMode: WiggleMode) => lens.patch({ wiggleMode })}
+              options={[
+                { value: "loop", label: "Loop" },
+                { value: "zigzag", label: "Zigzag" },
+              ]}
+            />
+            <Field label="Pos amount" display={`${Math.round(lens.wigglePosAmount)}px`}>
+              <Slider
+                aria-label="Position wiggle amount"
+                value={lens.wigglePosAmount}
+                min={0}
+                max={80}
+                onValueChange={(wigglePosAmount) => lens.patch({ wigglePosAmount })}
+              />
+            </Field>
+            <Field label="Pos speed" display={`${lens.wigglePosSpeed.toFixed(2)} Hz`}>
+              <Slider
+                aria-label="Position wiggle speed"
+                value={lens.wigglePosSpeed}
+                min={0}
+                max={2}
+                step={0.01}
+                onValueChange={(wigglePosSpeed) => lens.patch({ wigglePosSpeed })}
+              />
+            </Field>
+            <Field label="Rot amount" display={`${Math.round(lens.wiggleRotAmount)}°`}>
+              <Slider
+                aria-label="Rotation wiggle amount"
+                value={lens.wiggleRotAmount}
+                min={0}
+                max={45}
+                onValueChange={(wiggleRotAmount) => lens.patch({ wiggleRotAmount })}
+              />
+            </Field>
+            <Field label="Rot speed" display={`${lens.wiggleRotSpeed.toFixed(2)} Hz`}>
+              <Slider
+                aria-label="Rotation wiggle speed"
+                value={lens.wiggleRotSpeed}
+                min={0}
+                max={2}
+                step={0.01}
+                onValueChange={(wiggleRotSpeed) => lens.patch({ wiggleRotSpeed })}
+              />
+            </Field>
+            {lens.shape === "circle" ? null : (
+              <>
+                <Field
+                  label="Point amount"
+                  display={`${Math.round(lens.wigglePointsAmount)}px`}
+                >
+                  <Slider
+                    aria-label="Point wiggle amount"
+                    value={lens.wigglePointsAmount}
+                    min={0}
+                    max={48}
+                    onValueChange={(wigglePointsAmount) =>
+                      lens.patch({ wigglePointsAmount })
+                    }
+                  />
+                </Field>
+                <Field
+                  label="Point speed"
+                  display={`${lens.wigglePointsSpeed.toFixed(2)} Hz`}
+                >
+                  <Slider
+                    aria-label="Point wiggle speed"
+                    value={lens.wigglePointsSpeed}
+                    min={0}
+                    max={2}
+                    step={0.01}
+                    onValueChange={(wigglePointsSpeed) =>
+                      lens.patch({ wigglePointsSpeed })
+                    }
+                  />
+                </Field>
+              </>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             {(["4", "8"] as const).map((m) => (

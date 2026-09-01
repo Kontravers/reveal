@@ -1,4 +1,5 @@
 import { DitherRevealRenderer } from "./renderer";
+import { type LensShape, type Vec2, type WiggleMode } from "./shape";
 import {
   DEFAULT_DITHER_OPTIONS,
   type DitherMode,
@@ -21,11 +22,37 @@ const ATTRS = [
   "mids",
   "highlights",
   "follow",
+  "shape",
+  "sides",
+  "rect-aspect",
+  "rotation",
+  "rotation-speed",
+  "wiggle-mode",
+  "wiggle-pos-amount",
+  "wiggle-pos-speed",
+  "wiggle-rot-amount",
+  "wiggle-rot-speed",
+  "wiggle-points-amount",
+  "wiggle-points-speed",
+  "points",
 ] as const;
 
 function num(value: string | null, fallback: number) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function parsePoints(raw: string | null, fallback: Vec2[]): Vec2[] {
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw) as Vec2[];
+    if (!Array.isArray(parsed) || parsed.length < 3) return fallback;
+    return parsed
+      .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y))
+      .slice(0, 12);
+  } catch {
+    return fallback;
+  }
 }
 
 export class DitherRevealElement extends HTMLElement {
@@ -98,7 +125,9 @@ export class DitherRevealElement extends HTMLElement {
   private optionsFromAttributes(): DitherRevealOptions {
     const d = DEFAULT_DITHER_OPTIONS;
     const matrixRaw = num(this.getAttribute("matrix"), d.matrix);
+    const shape = (this.getAttribute("shape") as LensShape) || d.shape;
     return {
+      ...d,
       src: this.getAttribute("src") || d.src,
       mode: (this.getAttribute("mode") as DitherMode) || d.mode,
       radius: num(this.getAttribute("radius"), d.radius),
@@ -113,6 +142,25 @@ export class DitherRevealElement extends HTMLElement {
       mids: num(this.getAttribute("mids"), d.mids),
       highlights: num(this.getAttribute("highlights"), d.highlights),
       follow: num(this.getAttribute("follow"), d.follow),
+      shape,
+      sides: num(this.getAttribute("sides"), d.sides),
+      rectAspect: num(this.getAttribute("rect-aspect"), d.rectAspect),
+      polygonPoints: parsePoints(this.getAttribute("points"), d.polygonPoints),
+      rotation: num(this.getAttribute("rotation"), d.rotation),
+      rotationSpeed: num(this.getAttribute("rotation-speed"), d.rotationSpeed),
+      wigglePosAmount: num(this.getAttribute("wiggle-pos-amount"), d.wigglePosAmount),
+      wigglePosSpeed: num(this.getAttribute("wiggle-pos-speed"), d.wigglePosSpeed),
+      wiggleRotAmount: num(this.getAttribute("wiggle-rot-amount"), d.wiggleRotAmount),
+      wiggleRotSpeed: num(this.getAttribute("wiggle-rot-speed"), d.wiggleRotSpeed),
+      wigglePointsAmount: num(
+        this.getAttribute("wiggle-points-amount"),
+        d.wigglePointsAmount,
+      ),
+      wigglePointsSpeed: num(
+        this.getAttribute("wiggle-points-speed"),
+        d.wigglePointsSpeed,
+      ),
+      wiggleMode: (this.getAttribute("wiggle-mode") as WiggleMode) || d.wiggleMode,
     };
   }
 

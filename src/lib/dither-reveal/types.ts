@@ -1,5 +1,13 @@
+import {
+  regularPolygon,
+  type LensShape,
+  type Vec2,
+  type WiggleMode,
+} from "./shape";
+
 export type DitherMode = "dither" | "dither-color" | "color";
 export type DitherMatrix = 4 | 8;
+export type { LensShape, Vec2, WiggleMode };
 
 export type DitherRevealOptions = {
   src: string;
@@ -16,6 +24,19 @@ export type DitherRevealOptions = {
   mids: number;
   highlights: number;
   follow: number;
+  shape: LensShape;
+  sides: number;
+  rectAspect: number;
+  polygonPoints: Vec2[];
+  rotation: number;
+  rotationSpeed: number;
+  wigglePosAmount: number;
+  wigglePosSpeed: number;
+  wiggleRotAmount: number;
+  wiggleRotSpeed: number;
+  wigglePointsAmount: number;
+  wigglePointsSpeed: number;
+  wiggleMode: WiggleMode;
 };
 
 export const DEFAULT_DITHER_OPTIONS: DitherRevealOptions = {
@@ -33,6 +54,19 @@ export const DEFAULT_DITHER_OPTIONS: DitherRevealOptions = {
   mids: 0,
   highlights: 0,
   follow: 0.2,
+  shape: "circle",
+  sides: 6,
+  rectAspect: 1.55,
+  polygonPoints: regularPolygon(6),
+  rotation: 0,
+  rotationSpeed: 0,
+  wigglePosAmount: 0,
+  wigglePosSpeed: 0.35,
+  wiggleRotAmount: 0,
+  wiggleRotSpeed: 0.25,
+  wigglePointsAmount: 0,
+  wigglePointsSpeed: 0.45,
+  wiggleMode: "loop",
 };
 
 export const DITHER_MODE_LABEL: Record<DitherMode, string> = {

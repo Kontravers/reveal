@@ -80,13 +80,13 @@ uploaded as `uniform vec2 uPoints[12]` each frame. Cheap.
 
 ## Implementation order
 
-1. Types + `shape.ts` oscillators / vertex builders
-2. Shader polygon SDF + circle branch
-3. Renderer uploads points / center each frame
-4. React props + store defaults (motion at 0 so the hero does not change)
-5. Instrument: shape menu, per-shape knobs, motion module, polygon canvas
-6. Demo sections: triangle + n-gon so the feature is visible without opening the panel
-7. Snippets include the new props
+1. Types + `shape.ts` oscillators / vertex builders — done
+2. Shader polygon SDF + circle branch — done
+3. Renderer uploads points / center each frame — done
+4. React props + store defaults (motion at 0 so the hero does not change) — done
+5. Instrument: shape menu, per-shape knobs, motion module, polygon canvas — done
+6. Demo sections: triangle + n-gon so the feature is visible without opening the panel — done
+7. Snippets include the new props — done
 
 ## Later (not this pass)
 
