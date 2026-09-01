@@ -1,0 +1,14 @@
+node_modules
+.vercel
+.output
+.nitro
+dist
+*.log
+.env
+.env.*
+.DS_Store
+screenshots
+artifacts
+.grok/og-pending
+.grok/*.tmp
+*.tsbuildinfo
