@@ -95,6 +95,7 @@ function Home() {
           mode="dither-color"
           shape="ngon"
           sides={5}
+          ngonCurve={0.72}
           radius={200}
           softness={48}
           pixelSize={4}

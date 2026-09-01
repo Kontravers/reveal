@@ -1,6 +1,6 @@
 import { hexToRgb } from "@/lib/utils";
 import { FRAGMENT_SHADER, VERTEX_SHADER } from "./shader";
-import { MAX_SHAPE_POINTS, worldLensPoints } from "./shape";
+import { MAX_TESS_POINTS, worldLensPoints } from "./shape";
 import {
   DEFAULT_DITHER_OPTIONS,
   type DitherRevealOptions,
@@ -230,6 +230,7 @@ export class DitherRevealRenderer {
       sides: this.options.sides,
       rectAspect: this.options.rectAspect,
       polygonPoints: this.options.polygonPoints,
+      ngonCurve: this.options.ngonCurve ?? 0,
       radius: this.options.radius * dpr,
       rotation: this.options.rotation,
       rotationSpeed: this.options.rotationSpeed,
@@ -244,7 +245,7 @@ export class DitherRevealRenderer {
       cursorY: this.cursor.y,
       time,
     });
-    const packed = new Float32Array(MAX_SHAPE_POINTS * 2);
+    const packed = new Float32Array(MAX_TESS_POINTS * 2);
     for (let i = 0; i < lens.count; i++) {
       packed[i * 2] = lens.points[i]?.x ?? 0;
       packed[i * 2 + 1] = lens.points[i]?.y ?? 0;

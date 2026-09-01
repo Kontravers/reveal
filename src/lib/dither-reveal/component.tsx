@@ -23,6 +23,7 @@ export function DitherReveal({
     src,
     polygonPoints: rest.polygonPoints ?? DEFAULT_DITHER_OPTIONS.polygonPoints,
   };
+  rendererRef.current?.setOptions(options);
 
   useEffect(() => {
     const canvas = canvasRef.current;

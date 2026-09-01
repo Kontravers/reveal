@@ -28,7 +28,7 @@ uniform float uTime;
 uniform vec2 uCenter;
 uniform int uShapeKind;
 uniform int uPointCount;
-uniform vec2 uPoints[12];
+uniform vec2 uPoints[64];
 
 out vec4 fragColor;
 
@@ -92,7 +92,7 @@ float sdPolygon(vec2 p, int n) {
   vec2 v0 = uPoints[0];
   float d = dot(p - v0, p - v0);
   float s = 1.0;
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < 64; i++) {
     if (i >= n) break;
     int j = i == 0 ? n - 1 : i - 1;
     vec2 a = uPoints[i];

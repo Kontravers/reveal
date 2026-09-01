@@ -3,7 +3,16 @@ import type { DitherRevealOptions } from "./types";
 export function reactSnippet(options: DitherRevealOptions) {
   const points =
     options.shape === "polygon"
-      ? `\n    polygonPoints={${JSON.stringify(options.polygonPoints.map((p) => ({ x: Number(p.x.toFixed(3)), y: Number(p.y.toFixed(3)) })))}}`
+      ? `\n    polygonPoints={${JSON.stringify(
+          options.polygonPoints.map((p) => ({
+            x: Number(p.x.toFixed(3)),
+            y: Number(p.y.toFixed(3)),
+            kind: p.kind,
+            hin: { x: Number(p.hin.x.toFixed(3)), y: Number(p.hin.y.toFixed(3)) },
+            hout: { x: Number(p.hout.x.toFixed(3)), y: Number(p.hout.y.toFixed(3)) },
+            mirrored: p.mirrored,
+          })),
+        )}}`
       : "";
   return `<section className="relative min-h-[70vh] overflow-hidden bg-[#e8e2d4]">
   <DitherReveal
@@ -12,6 +21,7 @@ export function reactSnippet(options: DitherRevealOptions) {
     shape="${options.shape}"
     sides={${options.sides}}
     rectAspect={${options.rectAspect.toFixed(2)}}
+    ngonCurve={${options.ngonCurve.toFixed(2)}}
     radius={${Math.round(options.radius)}}
     softness={${Math.round(options.softness)}}
     rotation={${Math.round(options.rotation)}}
@@ -40,7 +50,16 @@ export function reactSnippet(options: DitherRevealOptions) {
 export function htmlSnippet(options: DitherRevealOptions) {
   const points =
     options.shape === "polygon"
-      ? `\n    points='${JSON.stringify(options.polygonPoints.map((p) => ({ x: Number(p.x.toFixed(3)), y: Number(p.y.toFixed(3)) })))}'`
+      ? `\n    points='${JSON.stringify(
+          options.polygonPoints.map((p) => ({
+            x: Number(p.x.toFixed(3)),
+            y: Number(p.y.toFixed(3)),
+            kind: p.kind,
+            hin: { x: Number(p.hin.x.toFixed(3)), y: Number(p.hin.y.toFixed(3)) },
+            hout: { x: Number(p.hout.x.toFixed(3)), y: Number(p.hout.y.toFixed(3)) },
+            mirrored: p.mirrored,
+          })),
+        )}'`
       : "";
   return `<section style="position:relative;min-height:70vh;overflow:hidden;background:${options.paper}">
   <dither-reveal
@@ -49,6 +68,7 @@ export function htmlSnippet(options: DitherRevealOptions) {
     shape="${options.shape}"
     sides="${options.sides}"
     rect-aspect="${options.rectAspect.toFixed(2)}"
+    ngon-curve="${options.ngonCurve.toFixed(2)}"
     radius="${Math.round(options.radius)}"
     softness="${Math.round(options.softness)}"
     rotation="${Math.round(options.rotation)}"

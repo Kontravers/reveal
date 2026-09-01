@@ -1,5 +1,5 @@
 import { DitherRevealRenderer } from "./renderer";
-import { type LensShape, type Vec2, type WiggleMode } from "./shape";
+import { type LensShape, type PathPoint, type WiggleMode, normalizePoints } from "./shape";
 import {
   DEFAULT_DITHER_OPTIONS,
   type DitherMode,
@@ -25,6 +25,7 @@ const ATTRS = [
   "shape",
   "sides",
   "rect-aspect",
+  "ngon-curve",
   "rotation",
   "rotation-speed",
   "wiggle-mode",
@@ -42,14 +43,13 @@ function num(value: string | null, fallback: number) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-function parsePoints(raw: string | null, fallback: Vec2[]): Vec2[] {
+function parsePoints(raw: string | null, fallback: PathPoint[]): PathPoint[] {
   if (!raw) return fallback;
   try {
-    const parsed = JSON.parse(raw) as Vec2[];
+    const parsed = JSON.parse(raw) as PathPoint[];
     if (!Array.isArray(parsed) || parsed.length < 3) return fallback;
-    return parsed
-      .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y))
-      .slice(0, 12);
+    const pts = normalizePoints(parsed);
+    return pts.length >= 3 ? pts : fallback;
   } catch {
     return fallback;
   }
@@ -145,6 +145,7 @@ export class DitherRevealElement extends HTMLElement {
       shape,
       sides: num(this.getAttribute("sides"), d.sides),
       rectAspect: num(this.getAttribute("rect-aspect"), d.rectAspect),
+      ngonCurve: num(this.getAttribute("ngon-curve"), d.ngonCurve),
       polygonPoints: parsePoints(this.getAttribute("points"), d.polygonPoints),
       rotation: num(this.getAttribute("rotation"), d.rotation),
       rotationSpeed: num(this.getAttribute("rotation-speed"), d.rotationSpeed),

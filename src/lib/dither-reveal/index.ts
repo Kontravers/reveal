@@ -4,9 +4,14 @@ export { DitherRevealRenderer } from "./renderer";
 export { reactSnippet, htmlSnippet } from "./snippet";
 export {
   MAX_SHAPE_POINTS,
+  MAX_TESS_POINTS,
   SHAPE_LABEL,
+  bezierAll,
+  ngonPath,
   regularPolygon,
+  toggleBezier,
   type LensShape,
+  type PathPoint,
   type Vec2,
   type WiggleMode,
 } from "./shape";

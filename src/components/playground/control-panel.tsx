@@ -12,9 +12,13 @@ import {
 import {
   MAX_SHAPE_POINTS,
   SHAPE_LABEL,
+  bezierAll,
+  cornerPoint,
+  ngonPath,
   regularPolygon,
+  toggleBezier,
   type LensShape,
-  type Vec2,
+  type PathPoint,
   type WiggleMode,
 } from "@/lib/dither-reveal/shape";
 import { MEDIA, useLens } from "@/lib/dither-reveal/store";
@@ -79,7 +83,7 @@ function Segmented<T extends string>({
   );
 }
 
-function insertMidpoint(points: Vec2[]): Vec2[] {
+function insertMidpoint(points: PathPoint[]): PathPoint[] {
   if (points.length >= MAX_SHAPE_POINTS) return points;
   let best = 0;
   let bestD = -1;
@@ -97,7 +101,7 @@ function insertMidpoint(points: Vec2[]): Vec2[] {
   const b = points[(best + 1) % points.length];
   if (!a || !b) return points;
   const next = [...points];
-  next.splice(best + 1, 0, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  next.splice(best + 1, 0, cornerPoint((a.x + b.x) / 2, (a.y + b.y) / 2));
   return next;
 }
 
@@ -105,6 +109,7 @@ export function ControlPanel() {
   const lens = useLens();
   const [copied, setCopied] = useState<"react" | "html" | null>(null);
   const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(0);
 
   const copy = async (kind: "react" | "html") => {
     const text = kind === "react" ? reactSnippet(lens) : htmlSnippet(lens);
@@ -185,8 +190,15 @@ export function ControlPanel() {
             <Segmented
               value={lens.shape}
               onChange={(shape: LensShape) => {
-                if (shape === "polygon" && lens.polygonPoints.length < 3) {
-                  lens.patch({ shape, polygonPoints: regularPolygon(lens.sides) });
+                if (shape === "polygon") {
+                  const baked =
+                    lens.shape === "ngon"
+                      ? ngonPath(lens.sides, lens.ngonCurve)
+                      : lens.polygonPoints.length >= 3
+                        ? lens.polygonPoints
+                        : regularPolygon(lens.sides);
+                  lens.patch({ shape, polygonPoints: baked });
+                  setSelected(0);
                 } else {
                   lens.patch({ shape });
                 }
@@ -249,24 +261,74 @@ export function ControlPanel() {
           ) : null}
 
           {lens.shape === "ngon" ? (
-            <Field label="Sides" display={`${lens.sides}`}>
-              <Slider
-                aria-label="Sides"
-                value={lens.sides}
-                min={3}
-                max={MAX_SHAPE_POINTS}
-                step={1}
-                onValueChange={(sides) => lens.patch({ sides })}
-              />
-            </Field>
+            <>
+              <Field label="Sides" display={`${lens.sides}`}>
+                <Slider
+                  aria-label="Sides"
+                  value={lens.sides}
+                  min={3}
+                  max={MAX_SHAPE_POINTS}
+                  step={1}
+                  onValueChange={(sides) => lens.patch({ sides })}
+                />
+              </Field>
+              <Field label="Curve" display={lens.ngonCurve.toFixed(2)}>
+                <Slider
+                  aria-label="N-gon curve"
+                  value={lens.ngonCurve}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  onValueChange={(ngonCurve) => lens.patch({ ngonCurve })}
+                />
+              </Field>
+              <p className="text-[11px] text-muted">
+                Curve turns every vertex into circular Bézier handles. Switch to
+                Poly to edit them one by one.
+              </p>
+            </>
           ) : null}
 
           {lens.shape === "polygon" ? (
             <div className="grid gap-3">
               <PolygonEditor
                 points={lens.polygonPoints}
+                selected={Math.min(selected, lens.polygonPoints.length - 1)}
+                onSelect={setSelected}
                 onChange={(polygonPoints) => lens.patch({ polygonPoints })}
+                onToggleBezier={(index) => {
+                  lens.patch({ polygonPoints: toggleBezier(lens.polygonPoints, index) });
+                  setSelected(index);
+                }}
               />
+              <div className="grid grid-cols-2 gap-1">
+                <button
+                  type="button"
+                  className={cn(
+                    "h-9 rounded-lg text-[11px] font-medium ring-1 transition-[background-color,color] duration-150",
+                    lens.polygonPoints[selected]?.kind === "bezier"
+                      ? "bg-ink text-paper ring-ink"
+                      : "text-muted ring-line hover:text-ink",
+                  )}
+                  onClick={() => {
+                    const i = Math.min(selected, lens.polygonPoints.length - 1);
+                    lens.patch({ polygonPoints: toggleBezier(lens.polygonPoints, i) });
+                  }}
+                >
+                  {lens.polygonPoints[selected]?.kind === "bezier"
+                    ? "Corner"
+                    : "Bézier"}
+                </button>
+                <button
+                  type="button"
+                  className="h-9 rounded-lg text-[11px] font-medium text-muted ring-1 ring-line hover:text-ink"
+                  onClick={() =>
+                    lens.patch({ polygonPoints: bezierAll(lens.polygonPoints) })
+                  }
+                >
+                  Curve all
+                </button>
+              </div>
               <div className="grid grid-cols-3 gap-1">
                 <button
                   type="button"
@@ -282,9 +344,9 @@ export function ControlPanel() {
                   className="h-9 rounded-lg text-[11px] font-medium text-muted ring-1 ring-line hover:text-ink"
                   onClick={() => {
                     if (lens.polygonPoints.length <= 3) return;
-                    lens.patch({
-                      polygonPoints: lens.polygonPoints.slice(0, -1),
-                    });
+                    const next = lens.polygonPoints.slice(0, -1);
+                    lens.patch({ polygonPoints: next });
+                    setSelected((s) => Math.min(s, next.length - 1));
                   }}
                 >
                   Drop
@@ -304,8 +366,9 @@ export function ControlPanel() {
                 </button>
               </div>
               <p className="text-[11px] text-muted">
-                Drag handles. Click empty canvas to add a point (
-                {lens.polygonPoints.length}/{MAX_SHAPE_POINTS}).
+                Squares are corners. Circles are Bézier. Double-click a point or
+                use Bézier to pull handles. Alt-drag breaks the mirror.{" "}
+                {lens.polygonPoints.length}/{MAX_SHAPE_POINTS}
               </p>
             </div>
           ) : null}
