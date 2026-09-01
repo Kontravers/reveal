@@ -11,4 +11,6 @@ screenshots
 artifacts
 .grok/og-pending
 .grok/*.tmp
+.grok/preview.pid
+.grok/preview.log
 *.tsbuildinfo
